@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Guru</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* CSS DASHBOARD GURU (Sama seperti sebelumnya) */
+        .dashboard-container { display: flex; height: 90vh; width: 95%; background: rgba(255, 255, 255, 0.95); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; }
+        .sidebar h2 { margin-bottom: 30px; font-size: 1.5em; text-align: center; }
+        .menu-item { padding: 15px; margin-bottom: 10px; cursor: pointer; border-radius: 10px; transition: 0.3s; display: flex; align-items: center; }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.1); }
+        .menu-item.active { background: #FF6B6B; box-shadow: 0 4px 10px rgba(255, 107, 107, 0.4); }
+        .menu-item i { margin-right: 10px; }
+        .content-area { flex: 1; padding: 30px; overflow-y: auto; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .form-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-edit { background: #F1C40F; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; margin-right: 5px; }
+        .btn-delete { background: #FF6B6B; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+        .lobby-card { background: linear-gradient(135deg, #4ECDC4, #556270); color: white; padding: 40px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4); }
+        .code-box { background: white; color: #333; font-size: 5em; font-weight: 800; display: inline-block; padding: 20px 50px; border-radius: 20px; letter-spacing: 10px; margin: 20px 0; border: 5px dashed #FF6B6B; }
+        .q-card { display: flex; align-items: center; background: white; padding: 15px; margin-bottom: 15px; border-radius: 12px; border-left: 5px solid #4ECDC4; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .q-thumb { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; margin-right: 15px; background: #eee; }
+        .q-info { flex: 1; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 15px; background: white; margin-bottom: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); align-items: center; }
+        .rank-badge { background: #FF6B6B; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm-lobby" loop>
+        <source src="lobby.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="muteBtn" onclick="toggleMute()" style="position:fixed; top:20px; right:20px; width:50px; height:50px; border-radius:50%; border:none; background:white; font-size:1.5em; z-index:9999; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); color:#2c3e50;">
+        <i class="fas fa-volume-up"></i>
+    </button>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>🎓 Panel Guru</h2>
+            <div class="menu-item active" onclick="switchTab(this, 'manage')"><i class="fas fa-edit"></i> Kelola Soal</div>
+            <div class="menu-item" onclick="switchTab(this, 'play')"><i class="fas fa-gamepad"></i> Mulai Kuis</div>
+            <div class="menu-item" onclick="window.location.href='/'"><i class="fas fa-sign-out-alt"></i> Keluar</div>
+        </div>
+
+        <div class="content-area">
+            
+            <div id="manage" class="section active">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 style="color:#2c3e50;">Bank Soal</h2>
+                    <button id="cancelEditBtn" onclick="cancelEdit()" style="display:none; background:#95a5a6; border:none; color:white; padding:10px; border-radius:5px; cursor:pointer;">Batal Edit</button>
+                </div>
+                
+                <div class="form-card" style="margin-top:20px;">
+                    <form id="questionForm">
+                        <input type="hidden" name="id" id="editId"> <input type="hidden" name="old_image" id="oldImage"> 
+                        <div class="input-group">
+                            <label>Mata Pelajaran</label>
+                            <select name="category" id="catInput" required>
+                                <option value="Sains">Sains</option>
+                                <option value="Matematika">Matematika</option>
+                                <option value="Bahasa">Bahasa</option>
+                                <option value="Sosial">Sosial</option>
+                                <option value="Seni">Seni</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Pertanyaan</label><textarea name="question_text" id="qTextInput" rows="2" required placeholder="Tulis pertanyaan..."></textarea></div>
+                        <div class="input-group"><label>Gambar (Opsional)</label><input type="file" name="image_file" accept="image/*"><p id="imagePreviewText" style="font-size:0.8em; color:#888; display:none;">Sedang menggunakan gambar lama.</p></div>
+                        <div class="input-group">
+                            <label>Pilihan Jawaban</label>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <input type="text" name="option_a" id="optA" placeholder="Opsi A" required>
+                                <input type="text" name="option_b" id="optB" placeholder="Opsi B" required>
+                                <input type="text" name="option_c" id="optC" placeholder="Opsi C" required>
+                                <input type="text" name="option_d" id="optD" placeholder="Opsi D" required>
+                            </div>
+                        </div>
+                        <div class="input-group"><label>Kunci Jawaban</label><select name="correct_answer" id="correctInput" required><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option></select></div>
+                        <button type="submit" id="submitBtn" class="btn-primary" style="font-size:16px;">💾 Simpan Soal</button>
+                    </form>
+                </div>
+
+                <div style="margin-top: 40px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>📂 Daftar Soal</h3>
+                        <select id="filterCategory" onchange="filterQuestions()" style="padding: 8px; border-radius: 8px;"><option value="All">Semua</option><option value="Sains">Sains</option><option value="Matematika">Matematika</option><option value="Bahasa">Bahasa</option><option value="Sosial">Sosial</option><option value="Seni">Seni</option></select>
+                    </div>
+                    <div id="questionsContainer" style="margin-top:20px;"></div>
+                </div>
+            </div>
+
+            <div id="play" class="section">
+                <div id="setupGame">
+                    <h2>Buka Kelas Baru</h2>
+                    <div class="form-card" style="text-align:center;">
+                        <p>Pilih pelajaran yang ingin dimainkan:</p>
+                        <select id="gameCategory" style="padding:15px; font-size:1.2em; margin:20px 0;"><option value="Sains">Sains</option><option value="Matematika">Matematika</option><option value="Bahasa">Bahasa</option><option value="Sosial">Sosial</option><option value="Seni">Seni</option></select><br>
+                        <button class="btn-primary" onclick="createRoom()">🚀 BUAT KODE KELAS</button>
+                    </div>
+                </div>
+                <div id="waitingArea" style="display:none;">
+                    <div class="lobby-card">
+                        <h3>Kode Kelas:</h3><div id="roomCodeDisplay" class="code-box">---</div><p>Ajak siswa masuk menggunakan kode ini.</p><div id="studentList" style="margin-top:20px;"></div><br>
+                        <button class="btn-primary" style="background:#f1c40f; color:#333; font-size:1.5em;" onclick="startGame()">▶️ MULAI GAME</button>
+                    </div>
+                </div>
+                <div id="gameplayArea" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>🏆 Papan Peringkat (Live)</h2>
+                        <button class="btn-primary" style="background:#27ae60; font-size:14px; width:auto;" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+                    </div>
+                    <p>Siswa sedang mengerjakan soal secara mandiri...</p>
+                    <div id="liveLeaderboard" style="margin-top:20px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let allFetchedQuestions = [];
+        let isEditing = false;
+        
+        // --- AUDIO LOGIC ---
+        const bgm = document.getElementById('bgm-lobby');
+        const muteBtn = document.getElementById('muteBtn');
+
+        // Cek Mute & Auto Play saat halaman dimuat
+        const isMuted = localStorage.getItem('isMuted') === 'true';
+        bgm.muted = isMuted;
+        updateMuteIcon(isMuted);
+        
+        // Coba play (biasanya browser mengizinkan karena user baru saja klik dari halaman sebelumnya)
+        bgm.play().catch(e => console.log("Perlu interaksi untuk play audio"));
+
+        function toggleMute() {
+            bgm.muted = !bgm.muted;
+            localStorage.setItem('isMuted', bgm.muted);
+            updateMuteIcon(bgm.muted);
+        }
+
+        function updateMuteIcon(muted) {
+            muteBtn.innerHTML = muted ? '<i class="fas fa-volume-mute" style="color:#FF6B6B"></i>' : '<i class="fas fa-volume-up"></i>';
+        }
+
+        // --- GAME LOGIC ---
+        function switchTab(element, tabId) {
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        async function loadQuestions() {
+            const res = await fetch('/api/questions');
+            allFetchedQuestions = await res.json();
+            filterQuestions();
+        }
+
+        function filterQuestions() {
+            const cat = document.getElementById('filterCategory').value;
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            const filtered = cat === 'All' ? allFetchedQuestions : allFetchedQuestions.filter(q => q.category === cat);
+            if(filtered.length === 0) { container.innerHTML = '<p>Tidak ada soal.</p>'; return; }
+            filtered.forEach(q => {
+                const img = q.image_path ? `<img src="/uploads/${q.image_path}" class="q-thumb">` : '';
+                container.innerHTML += `<div class="q-card">${img}<div class="q-info"><small>${q.category}</small><div style="font-weight:bold;">${q.question_text}</div></div><div><button class="btn-edit" onclick='editQuestion(${JSON.stringify(q)})'><i class="fas fa-pencil-alt"></i></button><button class="btn-delete" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash"></i></button></div></div>`;
+            });
+        }
+
+        function editQuestion(q) {
+            isEditing = true;
+            document.getElementById('editId').value = q.id; document.getElementById('oldImage').value = q.image_path || ''; document.getElementById('catInput').value = q.category; document.getElementById('qTextInput').value = q.question_text;
+            document.getElementById('optA').value = q.option_a; document.getElementById('optB').value = q.option_b; document.getElementById('optC').value = q.option_c; document.getElementById('optD').value = q.option_d; document.getElementById('correctInput').value = q.correct_answer;
+            document.getElementById('submitBtn').innerText = "🔄 Update Soal"; document.getElementById('cancelEditBtn').style.display = 'block'; document.getElementById('imagePreviewText').style.display = 'block'; window.scrollTo(0,0);
+        }
+
+        function cancelEdit() {
+            isEditing = false; document.getElementById('questionForm').reset(); document.getElementById('submitBtn').innerText = "💾 Simpan Soal"; document.getElementById('cancelEditBtn').style.display = 'none'; document.getElementById('imagePreviewText').style.display = 'none';
+        }
+
+        document.getElementById('questionForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); const formData = new FormData(e.target); const id = document.getElementById('editId').value;
+            const url = isEditing ? `/api/questions/${id}` : '/api/questions'; const method = isEditing ? 'PUT' : 'POST';
+            const res = await fetch(url, { method: method, body: formData });
+            if(res.ok) { alert(isEditing ? 'Soal Diupdate!' : 'Soal Disimpan!'); cancelEdit(); loadQuestions(); }
+        });
+
+        async function deleteQuestion(id) { if(confirm('Hapus soal ini?')) { await fetch(`/api/questions/${id}`, { method: 'DELETE' }); loadQuestions(); } }
+        loadQuestions();
+
+        function createRoom() { const cat = document.getElementById('gameCategory').value; socket.emit('create_room', cat); }
+        socket.on('room_created', (code) => { document.getElementById('setupGame').style.display = 'none'; document.getElementById('waitingArea').style.display = 'block'; document.getElementById('roomCodeDisplay').innerText = code; });
+        function startGame() { const code = document.getElementById('roomCodeDisplay').innerText; socket.emit('start_game', code); }
+        socket.on('game_started_teacher', () => { document.getElementById('waitingArea').style.display = 'none'; document.getElementById('gameplayArea').style.display = 'block'; });
+        socket.on('live_update', (data) => {
+            const board = document.getElementById('liveLeaderboard'); board.innerHTML = '';
+            data.players.forEach((p, i) => { board.innerHTML += `<div class="leaderboard-item"><div style="display:flex; align-items:center;"><div class="rank-badge">${i+1}</div><b>${p.name}</b></div><span style="color:#2ecc71; font-weight:bold;">${p.score} Poin</span></div>`; });
+        });
+        function downloadExcel() { const code = document.getElementById('roomCodeDisplay').innerText; if(code && code !== '---') { window.location.href = `/api/export/${code}`; } else { alert("Kode kelas tidak valid!"); } }
+    </script>
+</body>
+</html>

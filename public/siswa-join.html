@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk Kelas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        .login-card { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 30px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 4px solid #fff; position: relative; z-index: 10; }
+        .input-big { width: 100%; padding: 15px; margin: 10px 0; border: 3px solid #eee; border-radius: 15px; font-size: 1.2em; text-align: center; }
+        .btn-join { background: linear-gradient(to right, #FF6B6B, #FF8E53); color: white; font-size: 1.5em; font-weight: 800; padding: 15px; width: 100%; border: none; border-radius: 50px; margin-top: 20px; cursor: pointer; }
+        .screen { display: none; }
+        .screen.active { display: block; animation: popUp 0.5s; }
+        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .answers-container { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        .btn-opt { display: flex; align-items: center; width: 100%; padding: 15px 20px; border: none; border-radius: 15px; color: white; font-weight: bold; font-size: 1.1em; cursor: pointer; transition: 0.1s; text-align: left; }
+        .btn-opt:active { transform: scale(0.98); }
+        .letter-box { background: rgba(0,0,0,0.2); width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; margin-right: 15px; font-size: 1.2em; flex-shrink: 0; }
+        .opt-a { background-color: #FF6B6B; } .opt-b { background-color: #4ECDC4; } .opt-c { background-color: #FFD93D; color: #444; } .opt-d { background-color: #1A535C; }
+        .btn-correct { background-color: #2196F3 !important; transform: scale(1.05); border: 3px solid white; box-shadow: 0 0 15px #2196F3; } 
+        .btn-wrong { background-color: #ff0000 !important; }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; transform: translate3d(0, 0, 0); backface-visibility: hidden; perspective: 1000px; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .live-rank-badge { position: absolute; top: 20px; right: 20px; background: #2c3e50; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; font-weight: bold; }
+        .rank-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .rank-table th { text-align: left; color: #888; font-size: 0.8em; padding-bottom: 5px; border-bottom: 2px solid #eee; }
+        .rank-table td { padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: left; font-weight: bold; color: #555; }
+        .rank-highlight { color: #FF6B6B !important; }
+        .stat-box { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat-item { background: #f9f9f9; padding: 10px; border-radius: 10px; width: 45%; }
+        .stat-val { font-size: 1.5em; font-weight: bold; }
+        .green { color: #27ae60; } .red { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <div id="screen-login" class="login-card screen active">
+        <h1>🎒</h1>
+        <h2>Halo Petualang!</h2>
+        <input type="text" id="code" class="input-big" placeholder="Kode Kelas" style="text-transform:uppercase;">
+        <input type="text" id="name" class="input-big" placeholder="Nama Panggilan">
+        <button class="btn-join" onclick="joinGame()">MASUK KELAS</button>
+    </div>
+
+    <div id="screen-wait" class="login-card screen">
+        <h1>🐶</h1>
+        <h2>Berhasil Masuk!</h2>
+        <p>Halo <b id="displayName" style="color:#FF6B6B;"></b>!<br>Tunggu Guru memulai permainan...</p>
+    </div>
+
+    <div id="screen-game" class="login-card screen" style="max-width: 600px;">
+        <div class="live-rank-badge">Peringkat: <span id="myLiveRank">-</span></div>
+        <div style="display:flex; justify-content:space-between; color:#888; margin-top: 20px;">
+            <span id="s-qIndex">Soal 1</span>
+        </div>
+        <img id="s-qImage" src="" style="width:100%; height:200px; object-fit:cover; border-radius:15px; margin:10px 0; display:none;">
+        <h2 id="s-qText" style="color:#333; margin:20px 0; font-size: 1.3em;">...</h2>
+        <div class="answers-container" id="ansContainer">
+            <button class="btn-opt opt-a" id="btn-a" onclick="kirimJawaban('a')"><div class="letter-box">A</div><span id="txt-a"></span></button>
+            <button class="btn-opt opt-b" id="btn-b" onclick="kirimJawaban('b')"><div class="letter-box">B</div><span id="txt-b"></span></button>
+            <button class="btn-opt opt-c" id="btn-c" onclick="kirimJawaban('c')"><div class="letter-box">C</div><span id="txt-c"></span></button>
+            <button class="btn-opt opt-d" id="btn-d" onclick="kirimJawaban('d')"><div class="letter-box">D</div><span id="txt-d"></span></button>
+        </div>
+    </div>
+
+    <div id="screen-result" class="login-card screen">
+        <h1>🏆</h1>
+        <h2>Hasil Kamu</h2>
+        <div class="stat-box">
+            <div class="stat-item"><div class="stat-val green" id="finalCorrect">0</div><small>Benar</small></div>
+            <div class="stat-item"><div class="stat-val red" id="finalWrong">0</div><small>Salah</small></div>
+        </div>
+        <h1 style="color:#FF6B6B; margin:10px 0;" id="finalScore">0</h1>
+        <p>Peringkat Kamu: <b id="finalRankText" style="color:#2196F3; font-size:1.2em;">-</b></p>
+        <h3 style="margin-top:30px; text-align:left;">Papan Peringkat:</h3>
+        <table class="rank-table"><thead><tr><th>#</th><th>Nama</th><th>Skor</th></tr></thead><tbody id="rankTableBody"></tbody></table>
+        <button class="btn-join" style="margin-top:20px; font-size:1em;" onclick="location.href='/'">KELUAR</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let myRoomCode = ''; let myName = ''; let myId = ''; let lastSelectedBtn = '';
+
+        // --- AUDIO GAME ---
+        const bgmGame = new Audio('game.mp3'); bgmGame.loop = true;
+
+        // Tombol Mute JS (Dibuat otomatis agar ikonnya muncul berkat FontAwesome di HEAD)
+        const muteBtn = document.createElement('button');
+        muteBtn.style.cssText = "position:fixed; top:20px; right:20px; width:50px; height:50px; border-radius:50%; border:none; background:white; font-size:1.5em; z-index:9999; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); color:#2c3e50; display:flex; justify-content:center; align-items:center;";
+        muteBtn.onclick = toggleMute;
+        document.body.appendChild(muteBtn);
+
+        function checkAudioSettings() {
+            const isMuted = localStorage.getItem('isMuted') === 'true';
+            bgmGame.muted = isMuted;
+            updateMuteIcon(isMuted);
+            // Putar game.mp3 (Browser mungkin block jika belum interaksi, tapi akan jalan saat klik Masuk)
+            bgmGame.play().catch(e => console.log("Menunggu interaksi user"));
+        }
+
+        function toggleMute() {
+            bgmGame.muted = !bgmGame.muted;
+            localStorage.setItem('isMuted', bgmGame.muted);
+            updateMuteIcon(bgmGame.muted);
+        }
+
+        function updateMuteIcon(isMuted) {
+            // Gunakan class FontAwesome yang benar
+            muteBtn.innerHTML = isMuted ? '<i class="fas fa-volume-mute" style="color:#FF6B6B"></i>' : '<i class="fas fa-volume-up"></i>';
+        }
+
+        checkAudioSettings();
+
+        // --- LOGIC ---
+        function joinGame() {
+            const code = document.getElementById('code').value.toUpperCase().trim();
+            const name = document.getElementById('name').value.trim();
+            if (!code || !name) { alert("Isi Kode dan Nama!"); return; }
+            if(bgmGame.paused) bgmGame.play(); // Paksa play saat interaksi
+            myRoomCode = code; myName = name;
+            socket.emit('join_room', { roomCode: code, name: name });
+        }
+
+        socket.on('join_success', () => { myId = socket.id; document.getElementById('displayName').innerText = myName; showScreen('screen-wait'); });
+        socket.on('error', (msg) => alert("❌ " + msg));
+        socket.on('new_question', (data) => {
+            showScreen('screen-game'); resetButtons();
+            document.getElementById('s-qIndex').innerText = `Soal ${data.index} / ${data.total}`; document.getElementById('s-qText').innerText = data.question_text;
+            const img = document.getElementById('s-qImage'); if(data.image_path) { img.src = '/uploads/' + data.image_path; img.style.display = 'block'; } else { img.style.display = 'none'; }
+            document.getElementById('txt-a').innerText = data.options.a; document.getElementById('txt-b').innerText = data.options.b; document.getElementById('txt-c').innerText = data.options.c; document.getElementById('txt-d').innerText = data.options.d;
+        });
+
+        function resetButtons() { ['btn-a', 'btn-b', 'btn-c', 'btn-d'].forEach(id => { const el = document.getElementById(id); el.classList.remove('btn-correct', 'btn-wrong', 'shake'); el.disabled = false; }); }
+        function kirimJawaban(ans) { lastSelectedBtn = 'btn-' + ans; ['btn-a','btn-b','btn-c','btn-d'].forEach(id => document.getElementById(id).disabled = true); socket.emit('submit_answer', { roomCode: myRoomCode, answer: ans }); }
+        
+        socket.on('answer_result', (data) => {
+            const btn = document.getElementById(lastSelectedBtn);
+            if(data.isCorrect) { btn.classList.add('btn-correct'); triggerConfetti(); } else { btn.classList.add('btn-wrong'); btn.classList.add('shake'); }
+        });
+
+        function triggerConfetti() { var duration = 2 * 1000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 }; var interval = setInterval(function() { var timeLeft = animationEnd - Date.now(); if (timeLeft <= 0) { return clearInterval(interval); } var particleCount = 50 * (timeLeft / duration); confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } })); }, 250); }
+
+        socket.on('leaderboard_update', (players) => {
+            const myIndex = players.findIndex(p => p.id === myId); if(myIndex !== -1) { document.getElementById('myLiveRank').innerText = "#" + (myIndex + 1); }
+            const tbody = document.getElementById('rankTableBody'); tbody.innerHTML = '';
+            players.forEach((p, i) => { const isMe = p.id === myId; const rowClass = isMe ? 'rank-highlight' : ''; tbody.innerHTML += `<tr class="${rowClass}"><td>${i+1}</td><td>${p.name} ${isMe ? '(Kamu)' : ''}</td><td>${p.score}</td></tr>`; });
+        });
+
+        socket.on('game_finished', (data) => { showScreen('screen-result'); document.getElementById('finalScore').innerText = data.score; document.getElementById('finalCorrect').innerText = data.correct; document.getElementById('finalWrong').innerText = data.wrong; document.getElementById('finalRankText').innerText = "Juara ke-" + data.rank; });
+        function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    </script>
+</body>
+</html>
