@@ -29,16 +29,22 @@ app.use(express.json());
 app.use(express.static('public')); 
 
 // --- DATABASE ---
+// --- DATABASE ---
 const db = mysql.createConnection({
-    host: 'localhost', user: 'root', password: '', database: 'db_kuis_paud'
+    host: process.env.MYSQLHOST || 'localhost',
+    user: process.env.MYSQLUSER || 'root',
+    password: process.env.MYSQLPASSWORD || '',
+    database: process.env.MYSQLDATABASE || 'db_kuis_paud',
+    port: process.env.MYSQLPORT || 3306
 });
 
 db.connect(err => {
-    if(err) {
-        console.error('❌ DB Error:', err);
+    if (err) {
+        console.error('❌ Gagal Konek Database:', err.code);
+        console.error('Pesan Error:', err.message);
     } else {
         console.log('✅ Terhubung ke Database MySQL');
-        initDb();
+        initDb(); // Pastikan fungsi initDb dipanggil disini
     }
 });
 
